@@ -37,6 +37,12 @@ namespace gameboy
 
   // convenience function
   MemoryReference mem_ref(dbyte_t);
+
+  // Write a two-byte value
+  void write_dbyte(dbyte_t addr, dbyte_t val);
+
+  // Read a two-byte value
+  dbyte_t read_dbyte(dbyte_t addr);
 };
 
 #endif

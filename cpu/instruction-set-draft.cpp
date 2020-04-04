@@ -28,8 +28,7 @@ namespace gameboy
       // case 0xcb: // See above
 
       case 0x08: // LD (a16), SP
-      mem_ref(opr16) = byte_t(reg.sp());
-      mem_ref(opr16 + 1) = byte_t(reg.sp() >> 8);
+      write_dbyte(opr16, reg.sp());
       clocks = 20;
       break;
 
@@ -40,14 +39,15 @@ namespace gameboy
       break;
 
       case 0xe8: // ADD SP,r8
-      reg.sp() = add_signed(reg.sp(), opr8);
-      clocks = 16;
+      reg.sp() = ADDSP(reg.sp(), opr8);
       break;
 
       case 0xf8: // LD HL,SP+r8
-      reg.hl() = add_signed(reg.sp(), opr8);
-      clocks = 12;
+      reg.hl() = ADDSP(reg.sp(), opr8);
       break;
+
+      // case 0x10: // STOP
+      // STOP is coded as 10 00, here I simply ignore the second byte
 
       /*--- More cases will go here ---*/
 

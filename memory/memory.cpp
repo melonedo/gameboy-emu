@@ -16,7 +16,7 @@ namespace gameboy
   {
     return memory.at(addr);
   }
-  
+
   void MemoryReference::write(byte_t val)
   {
     if (addr < 0x8000)
@@ -39,5 +39,20 @@ namespace gameboy
   {
     write(val);
     return *this;
+  }
+
+  void write_dbyte(dbyte_t addr, dbyte_t val)
+  {
+    mem_ref(addr) = byte_t(val);
+    mem_ref(addr + 1) = byte_t(val >> 8);
+  }
+
+  dbyte_t read_dbyte(dbyte_t addr)
+  {
+    dbyte_t rval;
+    rval = byte_t(mem_ref(addr + 1));
+    rval <<= 8;
+    rval = byte_t(mem_ref(addr));
+    return rval;
   }
 };

@@ -46,20 +46,25 @@ namespace gameboy
     dbyte_t &sp(); dbyte_t &pc();
   }reg;
 
+  // More CPU state
+  // 4 MHz clock which controls execution of commands (in a real gameboy)
+  uint64_t cpu_clock;
+
+  // IME flag, controls whether to ahndle an interrupt or not
+  bool interrupt_master;
+
   // All the instructions go here.
   // Format dst = foo(...) where foo has side effect
   namespace instruction
   {
     void set_flag(bool zero, bool sub, bool h_carry, bool carry);
-    const byte_t zero_flag = 1 << 7, sub_flag = 1 << 6;
-    const byte_t h_carry_flag = 1 << 5, carry_flag = 1 << 4;
 
     // Conditions
     bool Z();
     bool C();
     bool NZ();
     bool NC();
-    
+
     // Instructions
     void NOP();
     void STOP();
@@ -107,6 +112,7 @@ namespace gameboy
     void RST(byte_t);
 
     dbyte_t ADD(dbyte_t, dbyte_t);
+    dbyte_t ADDSP(dbyte_t, byte_t); // Distinguish by flags
     dbyte_t DEC(dbyte_t);
     dbyte_t INC(dbyte_t);
   };
