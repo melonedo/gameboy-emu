@@ -44,14 +44,15 @@ namespace gameboy
     dbyte_t &af(); dbyte_t &bc(); dbyte_t &de(); dbyte_t &hl();
     //Two byte_t registers
     dbyte_t &sp(); dbyte_t &pc();
-  }reg;
+  };
+  extern Registers reg;
 
   // More CPU state
   // 4 MHz clock which controls execution of commands (in a real gameboy)
-  uint64_t cpu_clock;
+  extern uint64_t cpu_clock;
 
   // IME flag, controls whether to ahndle an interrupt or not
-  bool interrupt_master;
+  extern bool interrupt_master;
 
   // All the instructions go here.
   // Format dst = foo(...) where foo has side effect

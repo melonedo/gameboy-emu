@@ -146,6 +146,15 @@ namespace gameboy
     }
   }
 
+  void preprocess_palette(palette_t &plt, byte_t val)
+  {
+    byte_t mask = 0b11;
+    for (int i = 0; i < 4; i++, val >>= 2)
+    {
+      plt[i] = val & mask;
+    }
+  }
+
   // Copy 8 bytes
   void copy_one_row(const tile_t &tile, uint8_t row_num,
     const palette_t &plt, color_t *dst);
@@ -243,7 +252,7 @@ namespace gameboy
     }
   }
 
-  const tile_t &get_bg_tile(int code)
+  const tile_t &get_bg_tile(byte_t code)
   {
     if (unsigned_tile_num)
     {

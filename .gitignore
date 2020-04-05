@@ -34,4 +34,8 @@
 # Python cache
 *.pyc
 
+# Generated file
 cpu/instruction-set.cpp
+
+# Gameboy ROM
+*.gb

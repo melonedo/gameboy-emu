@@ -5,6 +5,10 @@
 
 namespace gameboy
 {
+  Registers reg;
+  uint64_t cpu_clock;
+  bool interrupt_master;
+
   void fetch_instruction(byte_t *opcode, byte_t *op8, dbyte_t *op16)
   {
     *opcode = memory.at(reg.pc());
@@ -53,7 +57,17 @@ namespace gameboy
       return;
     }
 
-    void RET(dbyte_t addr)
+    void EI()
+    {
+      return;
+    }
+
+    void DI()
+    {
+      return;
+    }
+
+    void RET()
     {
       POP(reg.pc());
     }
