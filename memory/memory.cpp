@@ -52,7 +52,7 @@ namespace gameboy
     dbyte_t rval;
     rval = byte_t(mem_ref(addr + 1));
     rval <<= 8;
-    rval = byte_t(mem_ref(addr));
+    rval |= byte_t(mem_ref(addr));
     return rval;
   }
 };

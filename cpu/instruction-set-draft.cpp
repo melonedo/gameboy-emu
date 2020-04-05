@@ -10,6 +10,11 @@ namespace gameboy
     /*--- The data will go here ---*/
   };
 
+  const char *disas_table[512] =
+  {
+    /*--- The disas will go here ---*/
+  };
+
   int exec_instruction(byte_t opcode, byte_t opr8, dbyte_t opr16)
   {
     int clocks, opcode_extended;

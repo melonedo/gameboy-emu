@@ -13,6 +13,7 @@ namespace gameboy
   SDL_Renderer *pRenderer;
 
   bool init_window();
+  bool close_window();
 
   void *window_main(void *param)
   {
@@ -27,6 +28,7 @@ namespace gameboy
       //
       SDL_Delay(1);
     }
+
     return NULL;
   }
 
@@ -47,7 +49,7 @@ namespace gameboy
 
     //Create window
     pWindow = SDL_CreateWindow(
-      "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+      "Gameboy-emu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
       window_width, window_height, SDL_WINDOW_SHOWN);
     if(pWindow == NULL)
     {
@@ -71,5 +73,17 @@ namespace gameboy
     }
 
     return true;
+  }
+
+  void close()
+  {
+  	//Destroy window
+  	SDL_DestroyRenderer(pRenderer);
+  	SDL_DestroyWindow(pWindow);
+  	pWindow = NULL;
+  	pRenderer = NULL;
+
+  	//Quit SDL subsystems
+  	// SDL_Quit();
   }
 };

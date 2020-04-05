@@ -39,6 +39,28 @@ def gen_length_table(set):
         f.write('\n')
         f.write(postscript)
 
+def gen_disas(set):
+    "Generate disassembly"
+    with open("instruction-set.cpp", 'rt') as f:
+        draft = f.read()
+    (foreword, postscript, indent) = \
+    find_anchor(draft, "/*--- The disas will go here ---*/")
+    with open("instruction-set.cpp", 'wt') as f:
+        f.write(foreword)
+        for i in range(0, 512):
+            f.write('\n' + indent + '"')
+            opname = set[i]['opname']
+            if (opname == 'UNDEF'):
+                f.write('UNDEF')
+            else:
+                f.write(set[i]['opname'] + ' ' + set[i]['operand'])
+            if i != 511:
+                f.write('",')
+            else:
+                f.write('"')
+        f.write('\n')
+        f.write(postscript)
+
 def gen_instruction_case(set):
     "Generate individual cases for each instruction"
     with open("instruction-set.cpp", 'rt') as f:
@@ -58,7 +80,7 @@ def gen_instruction_case(set):
 
             if i['opname'] == 'UNDEF':
                 f.write(f"// case {hex(i['opcode'])}: // UNDEF\n")
-                continue;
+                continue
 
             line = "case {}: // {} {}".format(
                 hex(i['opcode']), i['opname'], i['operand'])
@@ -163,4 +185,5 @@ with open("instruction-set.cpp", 'wt') as dst:
 
 ins_set = load_instruction_set()
 gen_length_table(ins_set)
+gen_disas(ins_set)
 gen_instruction_case(ins_set)

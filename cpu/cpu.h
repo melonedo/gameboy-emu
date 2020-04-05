@@ -3,6 +3,7 @@
 #define CPU_H_INCLUDED
 
 #include <cstdint>
+#include <string>
 #include "../util/byte-type.h"
 #include "../memory/memory.h"
 
@@ -16,8 +17,14 @@ namespace gameboy
   // Execute given instruciton, return number of clocks needed
   int exec_instruction(byte_t opcode, byte_t op8, dbyte_t op16);
 
+  // Get the disassembly according to current pc
+  std::string get_disas();
+
   // Length of each instruction, for use in fetch_instruction
   extern uint8_t instruction_length[256];
+
+  // Disassembly table
+  extern const char *disas_table[512];
 
   // The registers
   class Registers
@@ -49,7 +56,7 @@ namespace gameboy
 
   // More CPU state
   // 4 MHz clock which controls execution of commands (in a real gameboy)
-  extern uint64_t cpu_clock;
+  extern long cpu_clock;
 
   // IME flag, controls whether to ahndle an interrupt or not
   extern bool interrupt_master;

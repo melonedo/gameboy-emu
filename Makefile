@@ -14,7 +14,7 @@ PROGS = $(patsubst %.cpp,%.o,$(SRCS))
 
 CC = g++
 
-CFLAGS = -Wall -std=c++11 -O1 -pthread -ggdb -Wno-format
+CFLAGS = -Wall -std=c++11 -O0 -pthread -ggdb -Wno-format
 
 LIBRARY_PATHS = -LD:\Mingw_Lib\lib
 

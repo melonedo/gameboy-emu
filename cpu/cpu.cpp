@@ -1,12 +1,13 @@
 
 #include <cstdint>
+#include <string>
+#include <cstdio>
 #include "cpu.h"
 #include "../memory/memory.h"
 
 namespace gameboy
 {
   Registers reg;
-  uint64_t cpu_clock;
   bool interrupt_master;
 
   void fetch_instruction(byte_t *opcode, byte_t *op8, dbyte_t *op16)
@@ -24,6 +25,39 @@ namespace gameboy
       *op16 |= memory.at(reg.pc() + 1);
     }
     reg.pc() += len;
+  }
+
+  std::string get_disas()
+  {
+    using std::string;
+    using std::to_string;
+    byte_t opcode = memory.at(reg.pc());
+    int len = instruction_length[opcode];
+    if (len == 1)
+    {
+      return string(disas_table[opcode]);
+    }
+    else if (len == 2)
+    {
+      byte_t op8 = memory.at(reg.pc() + 1);
+      if (opcode == 0xcb)
+      {
+        return string(disas_table[0x100 + op8]);
+      }
+      else
+      {
+        char buf[4];
+        sprintf(buf, "%.2hhx", op8);
+        return string(disas_table[opcode]) + "; " + buf;
+      }
+    }
+    else
+    {
+      dbyte_t op16 = read_dbyte(reg.pc() + 1);
+      char buf[8];
+      sprintf(buf, "%.4x", op16);
+      return string(disas_table[opcode]) + "; " + buf;
+    }
   }
 
   namespace instruction

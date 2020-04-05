@@ -28,4 +28,15 @@ namespace gameboy
   // dir is the directory of rom.
   void *emulator_main(void *dir);
 
+
+  // Virtual clock mimicking the gameboy clock
+  extern long oscillator;
+  extern pthread_mutex_t oscillator_mutex;
+  extern pthread_cond_t oscillator_cond;
+
+  // Increases after instructions are executed
+  // If cpu_clock >= oscillator, cpu will hang
+  extern long cpu_clock;
+
+  extern bool show_disas;
 };
