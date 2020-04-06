@@ -55,7 +55,7 @@ namespace gameboy
     {
       dbyte_t op16 = read_dbyte(reg.pc() + 1);
       char buf[8];
-      sprintf(buf, "%.4x", op16);
+      sprintf(buf, "%.4hx", op16);
       return string(disas_table[opcode]) + "; " + buf;
     }
   }
@@ -93,12 +93,12 @@ namespace gameboy
 
     void EI()
     {
-      return;
+      interrupt_master = true;
     }
 
     void DI()
     {
-      return;
+      interrupt_master = false;
     }
 
     void RET()
@@ -163,7 +163,7 @@ namespace gameboy
 
     dbyte_t ADD(dbyte_t v1, dbyte_t v2)
     {
-      int res = v1 + v1;
+      int res = v1 + v2;
       set_flag(Z(), false, (v1 & 0xfff) + (v2 & 0xfff) > 0x1000, res > 0x10000);
       return res;
     }

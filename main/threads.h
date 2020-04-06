@@ -1,6 +1,7 @@
 // Thread related global variables
 
 #include <pthread.h>
+#include "../util/byte-type.h"
 
 namespace gameboy
 {
@@ -30,13 +31,28 @@ namespace gameboy
 
 
   // Virtual clock mimicking the gameboy clock
-  extern long oscillator;
+  extern long long oscillator;
   extern pthread_mutex_t oscillator_mutex;
   extern pthread_cond_t oscillator_cond;
 
   // Increases after instructions are executed
   // If cpu_clock >= oscillator, cpu will hang
-  extern long cpu_clock;
+  extern long long cpu_clock;
 
-  extern bool show_disas;
+  // Time of next screen event
+  extern long long video_next_event;
+
+  extern bool debugger_on;
+
+  extern pthread_mutex_t cpu_mutex;
+
+  void show_status();
+
+  // Write to IF (ff0f) or IE (ffff).
+  // Write to IF will trigger interrupts.
+  byte_t write_interrupt_flag(dbyte_t addr, byte_t val);
+
+  enum {IF = 0xff0f, IE = 0xffff};
+
+  void start_lcd();
 };

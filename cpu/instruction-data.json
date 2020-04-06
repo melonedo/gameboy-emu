@@ -239,7 +239,7 @@
 {"opname":"RET","operand":"Z","len":"1","time":"20/8","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"RET","operand":"","len":"1","time":"16","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"JP","operand":"Z,a16","len":"3","time":"16/12","Z":"-","N":"-","H":"-","C":"-"},
-{"opname":"PREFIX CB","operand":"","len":"1","time":"4","Z":"-","N":"-","H":"-","C":"-"},
+{"opname":"PREFIX CB","operand":"","len":"2","time":"4","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"CALL","operand":"Z,a16","len":"3","time":"24/12","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"CALL","operand":"a16","len":"3","time":"24","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"ADC","operand":"A,d8","len":"2","time":"8","Z":"Z","N":"0","H":"H","C":"C"},
@@ -268,7 +268,7 @@
 
 {"opname":"LDH","operand":"(a8),A","len":"2","time":"12","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"POP","operand":"HL","len":"1","time":"12","Z":"-","N":"-","H":"-","C":"-"},
-{"opname":"LD","operand":"(C),A","len":"2","time":"8","Z":"-","N":"-","H":"-","C":"-"},
+{"opname":"LD","operand":"(C),A","len":"1","time":"8","Z":"-","N":"-","H":"-","C":"-"},
 { },
 { },
 {"opname":"PUSH","operand":"HL","len":"1","time":"16","Z":"-","N":"-","H":"-","C":"-"},
@@ -287,7 +287,7 @@
 
 {"opname":"LDH","operand":"A,(a8)","len":"2","time":"12","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"POP","operand":"AF","len":"1","time":"12","Z":"Z","N":"N","H":"H","C":"C"},
-{"opname":"LD","operand":"A,(C)","len":"2","time":"8","Z":"-","N":"-","H":"-","C":"-"},
+{"opname":"LD","operand":"A,(C)","len":"1","time":"8","Z":"-","N":"-","H":"-","C":"-"},
 {"opname":"DI","operand":"","len":"1","time":"4","Z":"-","N":"-","H":"-","C":"-"},
 { },
 {"opname":"PUSH","operand":"AF","len":"1","time":"16","Z":"-","N":"-","H":"-","C":"-"},

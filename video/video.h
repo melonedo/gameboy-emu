@@ -31,4 +31,6 @@ namespace gameboy
   byte_t write_video_mem(dbyte_t addr, byte_t val);
 
   enum {LCDC = 0xff40, STAT, SCY, SCX, LY, LYC, DMA, BGP, OBP0, OBP1, WY, WX};
+
+  extern bool lcd_on;
 };

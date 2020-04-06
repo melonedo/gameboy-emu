@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include "video.h"
+#include "../main/threads.h"
 
 namespace gameboy
 {
@@ -26,7 +27,7 @@ namespace gameboy
   bool unsigned_tile_num; // Affects both bg and win
   bool win_on;
   dbyte_t win_map_addr;
-  bool lcdc_on;
+  bool lcd_on;
 
   typedef std::array<byte_t, 4> palette_t;
   // ff47: BGP
@@ -40,6 +41,8 @@ namespace gameboy
   void preprocess_palette(palette_t &plt , byte_t val);
 
   void dma_transfer(byte_t val);
+
+  void write_lcdc(byte_t val);
 
   byte_t write_video_mem(dbyte_t addr, byte_t val)
   {
@@ -105,6 +108,10 @@ namespace gameboy
         preprocess_palette(obp[1], val);
         break;
 
+        case LCDC:
+        write_lcdc(val);
+        break;
+
         default:
         break;
       }
@@ -114,6 +121,36 @@ namespace gameboy
       // This should not happen
     }
     return val;
+  }
+
+  void write_lcdc(byte_t val)
+  {
+    bg_on = val & (1 << 0);
+    sprite_on = val & (1 << 1);
+    use_large_sprite = val & (1 << 2);
+    unsigned_tile_num = val & (1 << 4);
+    win_on = val & (1 << 5);
+    bool lcd_on_old = lcd_on;
+    lcd_on = val & (1 << 7);
+
+    if (val & (1 << 3))
+      bg_map_addr = 0x9c00;
+    else
+      bg_map_addr = 0x9800;
+
+    if (val & (1 << 6))
+      win_map_addr = 0x9c00;
+    else
+      win_map_addr = 0x9800;
+
+    if (!lcd_on)
+    {
+      memory.at(LY) = 0;
+    }
+    else if (!lcd_on_old)
+    {
+      start_lcd();
+    }
   }
 
   void dma_transfer(byte_t val)

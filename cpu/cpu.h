@@ -56,7 +56,7 @@ namespace gameboy
 
   // More CPU state
   // 4 MHz clock which controls execution of commands (in a real gameboy)
-  extern long cpu_clock;
+  extern long long cpu_clock;
 
   // IME flag, controls whether to ahndle an interrupt or not
   extern bool interrupt_master;

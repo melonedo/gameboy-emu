@@ -2,6 +2,8 @@
 #include <array>
 #include "memory.h"
 #include "../util/byte-type.h"
+#include "../video/video.h"
+#include "../main/threads.h"
 
 namespace gameboy
 {
@@ -26,7 +28,23 @@ namespace gameboy
     }
     else
     {
+      // Case with ranges, gnu c extension
+      switch (addr)
+      {
+        case 0x8000 ... 0x9fff:
+        case 0xfe00 ... 0xfe9f:
+        case 0xff40 ... 0xff4b:
+        val = write_video_mem(addr, val);
+        break;
+
+        case 0xff0f:
+        val = write_interrupt_flag(addr, val);
+
+        default:
+        break;
+      }
       memory.at(addr) = val;
+
     }
   }
 
