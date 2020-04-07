@@ -39,12 +39,15 @@ namespace gameboy
 
         case 0xff0f:
         val = write_interrupt_flag(addr, val);
+        break;
+
+        case 0xff00:
+        val = write_joypad(val);
 
         default:
         break;
       }
       memory.at(addr) = val;
-
     }
   }
 

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <cstdio>
 #include "video.h"
 #include "../main/threads.h"
 
@@ -81,6 +82,7 @@ namespace gameboy
         spr.x_flip = val & 0x20;
         spr.palette = val & 0x10;
       }
+      // printf("sprite %d %d", sprite_num, spr.y);
     }
     else if (addr >= 0xff40 && addr <= 0xff4b)
     {
@@ -155,10 +157,19 @@ namespace gameboy
 
   void dma_transfer(byte_t val)
   {
-    dbyte_t addr = 0x100 * val;
-    byte_t *dst = &memory.at(0xfe00);
-    byte_t *src = &memory.at(addr);
-    memcpy(dst, src, 0xa0 * sizeof(byte_t));
+    // dbyte_t addr = 0x100 * val;
+    // byte_t *dst = &memory.at(0xfe00);
+    // byte_t *src = &memory.at(addr);
+    // memcpy(dst, src, 0xa0 * sizeof(byte_t));
+    dbyte_t src = 0x100 * val;
+    dbyte_t dst = 0xfe00;
+    for (int i = 0; i < 0xa0; i++)
+    {
+      // printf("dst=%hx\n", dst+i);
+      mem_ref(dst + i) = memory.at(src + i);
+    }
+    // printf("%hhd %hhd %x\n", memory.at(0xfe01), memory.at(0xfe00), memory.at(0xfe02));
+    // printf("%hhd %hhd %x\n", sprite_set[0].x, sprite_set[0].y, sprite_set[0].tile_num);
   }
 
   void preprocess_tile(dbyte_t tile_num, byte_t row_num, bool is_high_byte,
@@ -169,8 +180,8 @@ namespace gameboy
 
     // Write to write_bit, while remain the other bit as is
     byte_t write_bit = is_high_byte ? 2 : 1;
-    byte_t mask = 1;
-    for (int i = 0; i < 8; i++, mask <<= 1)
+    byte_t mask = 0x80;
+    for (int i = 0; i < 8; i++, mask >>= 1)
     {
       if (mask & val)
       {
@@ -244,13 +255,17 @@ namespace gameboy
       byte_t left = memory.at(SCX);
       byte_t up = memory.at(SCY);
       dbyte_t relative_row = (up + row_num) % 256;
-      dbyte_t map_base = bg_map_addr + 32 * relative_row;
+      dbyte_t map_base = bg_map_addr + 32 * (relative_row / 8);
       int map_index_begin = left / 8;
       auto copy_dst = buf.begin() + 8 - left % 8;
       const int tile_num = screen_column_num / 8 + 1;
+      if (debugger_on)
+      printf("%hhd %hhd %hd %hx %d %d\n", left, up, relative_row, map_base, map_index_begin, copy_dst - buf.begin());
 
       for (int i = 0; i < tile_num; i++)
       {
+        if (debugger_on)
+        printf("Tile %.2hhx-%.2hhx row %hhd\n",map_base + (i + map_index_begin) % 32, memory.at(map_base + (i + map_index_begin) % 32), relative_row % 8);
         copy_one_row(
           get_bg_tile(memory.at(map_base + (i + map_index_begin) % 32)),
           relative_row % 8, bgp, copy_dst + 8 * i);
@@ -293,10 +308,14 @@ namespace gameboy
   {
     if (unsigned_tile_num)
     {
+      if (debugger_on)
+      printf("%.2hhx ", code);
       return tile_set[code];
     }
     else
     {
+      if (debugger_on)
+      printf("s%d ", 256 + code);
       return tile_set[add_signed(dbyte_t(256), code)];
     }
   }

@@ -22,6 +22,13 @@ namespace gameboy
   // Entry point
   void *window_main(void *);
 
+  extern byte_t joypad;
+
+  // Joypad
+  byte_t write_joypad(byte_t val);
+
+  extern pthread_mutex_t video_mutex;
+
 
   // For the emulator thread
   extern pthread_t emulator_thread;

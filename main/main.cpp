@@ -19,14 +19,20 @@ const char *rom_dir = "testrom.gb";
 
 std::set<dbyte_t> breakpoints;
 
+
+
 // Console interaction
 void repl();
+
+// Increase oscillator until clocks is reached, keep synchronized with real time
+void sync_oscillator(long long clocks);
 
 int main(int argc, char *argv[])
 {
   pthread_mutex_init(&oscillator_mutex, NULL);
   pthread_cond_init(&oscillator_cond, NULL);
   pthread_mutex_init(&cpu_mutex, NULL);
+  pthread_mutex_init(&video_mutex, NULL);
 
   printf("Starting SDL.\n");
   bool success = init_and_wait(&window_thread, window_main, NULL);
@@ -59,6 +65,9 @@ int main(int argc, char *argv[])
   pthread_mutex_unlock(&cpu_mutex);
   pthread_mutex_destroy(&cpu_mutex);
   pthread_cond_destroy(&oscillator_cond);
+  pthread_mutex_lock(&video_mutex);
+  pthread_mutex_unlock(&video_mutex);
+  pthread_mutex_destroy(&video_mutex);
   return 0;
 }
 
@@ -70,7 +79,7 @@ void repl()
     "Enter 'd' to toggle debug information. Enter 's' to show status once. "
     "Enter 'r' to run until next breakpoint. Enter 'b' to set new breakpoint."
     "Enter 'n' to delete all breakpoints. Enter 'm' to dump memory. "
-    "Enter 'v' to view video buffer. \n");
+    "Enter 'v' to view video buffer. Enter 'j' to simulate joypad. \n");
   int step_len = 4;
   char c;
 
@@ -186,6 +195,21 @@ void repl()
         }
         break;
 
+        case 'j':
+        {
+          byte_t j;
+          if (scanf("%x", &j) != 1)
+          {
+            printf("Invalid format!\n");
+          }
+          else
+          {
+            joypad = j;
+            printf("Set joypad to %x.\n", joypad);
+          }
+        }
+        break;
+
         default:
         printf("Unkown character: \'%c\'!\n", c);
       }
@@ -211,11 +235,12 @@ void repl()
         step_len = tmp;
       }
     }
-    pthread_mutex_lock(&oscillator_mutex);
-    oscillator += step_len;
-    pthread_cond_signal(&oscillator_cond);
-    pthread_mutex_unlock(&oscillator_mutex);
-    printf("Osc: %lld\n", oscillator);
+    sync_oscillator(oscillator + step_len);
+    // pthread_mutex_lock(&oscillator_mutex);
+    // oscillator += step_len;
+    // pthread_cond_signal(&oscillator_cond);
+    // pthread_mutex_unlock(&oscillator_mutex);
+    // printf("Osc: %lld\n", oscillator);
   }
   // Emulator is probably still locked now
   pthread_mutex_lock(&oscillator_mutex);
@@ -231,4 +256,27 @@ void show_boot_rom()
     printf("%.2hhx ", memory.at(i));
   }
   putchar('\n');
+}
+
+const int frequency = 4000000;
+const int clock_step = frequency / 1000;
+void sync_oscillator(long long clocks)
+{
+  uint32_t ticks_start = SDL_GetTicks();
+  long long osc_start = oscillator;
+  while (oscillator < clocks && !program_ended)
+  {
+    while (!program_ended)
+    {
+      uint32_t ticks_past = SDL_GetTicks() - ticks_start;
+      long long clocks_should_past = frequency / 1000 * ticks_past;
+      if (clocks_should_past > oscillator - osc_start)
+        break;
+      SDL_Delay(1);
+    }
+    pthread_mutex_lock(&oscillator_mutex);
+    oscillator += clock_step;
+    pthread_cond_signal(&oscillator_cond);
+    pthread_mutex_unlock(&oscillator_mutex);
+  }
 }

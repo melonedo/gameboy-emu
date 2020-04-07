@@ -12,11 +12,24 @@ namespace gameboy
   SDL_Window *pWindow;
   SDL_Renderer *pRenderer;
 
+  pthread_mutex_t video_mutex;
+
+  // Signle byte representing 8 keys
+  // 1 for released, 0 for pressed
+  byte_t joypad = 0xff;
+
+  enum {
+    KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN,
+    KEY_A, KEY_B, KEY_SELECT, KEY_START};
+  // A, B, SEL, START are mapped to D, F, E, R respectively
+
   bool init_window();
 
   void close_window();
 
   void refresh_screen();
+
+  void refresh_key(int num, bool key_pressed_down);
 
   void *window_main(void *param)
   {
@@ -37,26 +50,49 @@ namespace gameboy
           program_ended = true;
           break;
         }
-        else if (e.type == SDL_KEYDOWN)
+        else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
         {
           switch (e.key.keysym.sym)
           {
             case SDLK_UP:
-            printf("up\n");
+            refresh_key(KEY_UP, e.type == SDL_KEYDOWN);
             break;
 
             case SDLK_DOWN:
-            printf("down\n");
+            refresh_key(KEY_DOWN, e.type == SDL_KEYDOWN);
             break;
 
             case SDLK_LEFT:
-            printf("left\n");
+            refresh_key(KEY_LEFT, e.type == SDL_KEYDOWN);
             break;
 
             case SDLK_RIGHT:
-            printf("right\n");
+            refresh_key(KEY_RIGHT, e.type == SDL_KEYDOWN);
             break;
 
+            case SDLK_d:
+            printf("D");
+            refresh_key(KEY_A, e.type == SDL_KEYDOWN);
+            printf("\n%x", joypad);
+            break;
+
+            case SDLK_f:
+            printf("F");
+            refresh_key(KEY_B, e.type == SDL_KEYDOWN);
+            printf("\n%x", joypad);
+            break;
+
+            case SDLK_e:
+            printf("E");
+            refresh_key(KEY_SELECT, e.type == SDL_KEYDOWN);
+            printf("\n%x", joypad);
+            break;
+
+            case SDLK_r:
+            printf("R");
+            refresh_key(KEY_START, e.type == SDL_KEYDOWN);
+            printf("\n%x", joypad);
+            break;
           }
         }
       }
@@ -147,5 +183,44 @@ namespace gameboy
       }
     }
     SDL_RenderPresent(pRenderer);
+  }
+
+  void refresh_key(int ind, bool key_down)
+  {
+    // First check for events
+    if (key_down && !joypad)
+    {
+      // Joybad interrupt
+      mem_ref(IF) = mem_ref(IF) | (1 << 4);
+    }
+
+    byte_t mask = (1 << ind);
+    if (key_down)
+    {
+      joypad &= ~mask;
+    }
+    else
+    {
+      joypad |= mask;
+    }
+  }
+
+  byte_t write_joypad(byte_t val)
+  {
+    byte_t res = ~0;
+
+    if (~val & (1 << 4))
+    {
+      res &= joypad | ~0xf;
+    }
+
+    if (~val & (1 << 5))
+    {
+      res &= (joypad >> 4) | ~0xf;
+    }
+
+    res &= ~0x30 | val;
+    printf("%x\n", res);
+    return res;
   }
 };

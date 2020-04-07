@@ -131,6 +131,8 @@ namespace gameboy
       instruction::RST(interrupt_address);
       cpu_clock += 16;
       interrupt_master = false;
+      int interrupt_ind = (interrupt_address - 0x40) / 8;
+      memory.at(IF) |= (1 << interrupt_ind);
       interrupt_address = 0;
     }
     else
@@ -183,7 +185,8 @@ namespace gameboy
         video_next_event += sprite_search_clocks;
         ly = (ly + 1) % (screen_row_num + v_blank_lines);
         memory.at(LY) = ly;
-        printf("========== ly=%.2x\n", ly);
+        if (debugger_on || ly == 0)
+        printf("========== clk=%lld\n", cpu_clock);
         if (stat & (1 << 3))
         {
           stat_interrupt();
@@ -221,14 +224,14 @@ namespace gameboy
       {
         stat |= video_mode;
       }
-      else if (ly < screen_row_num + v_blank_lines)
+      else
       {
         stat |= 2;
-        if (ly == screen_row_num)
+        if (ly == screen_row_num && video_mode == sprite_search)
         {
           // The first of 10 lines in vertical blank
           // Set vertical blank flag
-          mem_ref(IF) = 1 | memory.at(IF);
+          mem_ref(IF) = ~1 & memory.at(IF);
           if (stat & (1 << 4))
           {
             stat_interrupt();
@@ -243,9 +246,8 @@ namespace gameboy
 
   byte_t write_interrupt_flag(dbyte_t addr, byte_t val)
   {
-    byte_t old = memory.at(IF);
-    byte_t falling_edge = ~val & old;
-    byte_t events = falling_edge & memory.at(IE);
+    byte_t events = ~val & memory.at(IE);
+    // printf("%x %x\n", falling_edge, memory.at(IE));
 
     if (events && interrupt_master)
     {
@@ -254,7 +256,9 @@ namespace gameboy
         if (events & (1 << i))
         {
           interrupt_address = 0x40 + 8 * i;
-          printf("Interrupt %d\n", i);
+          if (debugger_on)
+          printf("Interrupt %d. IF=%.2hhx, IE=%.2hhx\n", i, val, memory.at(IE));
+          break;
         }
       }
     }
