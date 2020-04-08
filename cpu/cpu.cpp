@@ -4,6 +4,7 @@
 #include <cstdio>
 #include "cpu.h"
 #include "../memory/memory.h"
+#include "../main/threads.h"
 
 namespace gameboy
 {
@@ -83,11 +84,15 @@ namespace gameboy
     // HALT and STOP requires more functionality to instantiate
     void HALT()
     {
+      // puts("HALT");
+      cpu_mode = cpu_mode_halt;
       return;
     }
 
     void STOP()
     {
+      puts("STOP");
+      cpu_mode = cpu_mode_stop;
       return;
     }
 
@@ -142,14 +147,14 @@ namespace gameboy
 
     byte_t ADD(byte_t v1, byte_t v2)
     {
-      int res = v1 + v1;
+      int res = v1 + v2;
       set_flag(res == 0, false, (v1 & 0xf) + (v2 & 0xf) > 0x10, res > 0x100);
       return res;
     }
 
     byte_t ADC(byte_t v1, byte_t v2)
     {
-      int res = v1 + v1 + C();
+      int res = v1 + v2 + C();
       set_flag(res == 0, false, (v1 & 0xf) + (v2 & 0xf) + C()> 0x10, res > 0x100);
       return res;
     }
@@ -333,10 +338,15 @@ namespace gameboy
 
     byte_t DAA(byte_t val)
     {
-      //Game Boy Programming Manual pp.122
+      // printf("[%.4hx] DAA %.2hhx with %s %s %s %s: ", reg.pc() - 1, reg.a(),
+      //   Z() ? "Z" : "-",
+      //   reg.f() & sub_flag ? "Sub" : "Add",
+      //   reg.f() & h_carry_flag ? "H" : "-",
+      //   C() ? "C" : "-");
+      // Game Boy Programming Manual pp.122
       if (reg.f() & sub_flag)
       {
-        //After subtraction
+        // After subtraction (carry flag means borrowing)
         if (reg.f() & h_carry_flag)
         {
           val -= 6;
@@ -349,14 +359,14 @@ namespace gameboy
       }
       else
       {
-        //After addition
+        // After addition
         if ((val & 0xf) > 9 || reg.f() & h_carry_flag)
         {
-          //If last addition results in a decimal carry,
-          //add 6 more to force a correct hexadecimal carry
+          // If last addition results in a decimal carry,
+          // add 6 more to force a correct hexadecimal carry
           val += 6;
         }
-        if ((val & 0xf0) > 9 || C())
+        if ((val & 0xf0) > 0x90 || C())
         {
           val += 0x60;
           set_flag(val == 0, reg.f() & sub_flag, false, true);
@@ -366,6 +376,7 @@ namespace gameboy
           set_flag(val == 0, reg.f() & sub_flag, false, false);
         }
       }
+      // printf("%.2hhx\n", val);
       return val;
     }
 

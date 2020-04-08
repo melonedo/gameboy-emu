@@ -79,8 +79,9 @@ void repl()
     "Enter 'd' to toggle debug information. Enter 's' to show status once. "
     "Enter 'r' to run until next breakpoint. Enter 'b' to set new breakpoint."
     "Enter 'n' to delete all breakpoints. Enter 'm' to dump memory. "
-    "Enter 'v' to view video buffer. Enter 'j' to simulate joypad. \n");
-  int step_len = 4;
+    "Enter 'v' to view video buffer. Enter 'j' to simulate joypad. "
+    "Enter 'g' to simply go and play!\n");
+  long long step_len = 4;
   char c;
 
   debugger_on = false;
@@ -210,6 +211,10 @@ void repl()
         }
         break;
 
+        case 'g':
+        sync_oscillator(std::numeric_limits<long long>::max() - oscillator);
+        break;
+
         default:
         printf("Unkown character: \'%c\'!\n", c);
       }
@@ -276,6 +281,10 @@ void sync_oscillator(long long clocks)
     }
     pthread_mutex_lock(&oscillator_mutex);
     oscillator += clock_step;
+    if (oscillator > clocks)
+    {
+      oscillator = clocks;
+    }
     pthread_cond_signal(&oscillator_cond);
     pthread_mutex_unlock(&oscillator_mutex);
   }

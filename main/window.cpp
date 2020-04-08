@@ -71,27 +71,19 @@ namespace gameboy
             break;
 
             case SDLK_d:
-            printf("D");
             refresh_key(KEY_A, e.type == SDL_KEYDOWN);
-            printf("\n%x", joypad);
             break;
 
             case SDLK_f:
-            printf("F");
             refresh_key(KEY_B, e.type == SDL_KEYDOWN);
-            printf("\n%x", joypad);
             break;
 
             case SDLK_e:
-            printf("E");
             refresh_key(KEY_SELECT, e.type == SDL_KEYDOWN);
-            printf("\n%x", joypad);
             break;
 
             case SDLK_r:
-            printf("R");
             refresh_key(KEY_START, e.type == SDL_KEYDOWN);
-            printf("\n%x", joypad);
             break;
           }
         }
@@ -220,7 +212,6 @@ namespace gameboy
     }
 
     res &= ~0x30 | val;
-    printf("%x\n", res);
     return res;
   }
 };

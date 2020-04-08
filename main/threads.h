@@ -1,5 +1,7 @@
 // Thread related global variables
 
+#ifndef THREADS_H_INCLUDED
+#define THREADS_H_INCLUDED
 #include <pthread.h>
 #include "../util/byte-type.h"
 
@@ -62,4 +64,11 @@ namespace gameboy
   enum {IF = 0xff0f, IE = 0xffff};
 
   void start_lcd();
+
+  enum {cpu_mode_normal, cpu_mode_halt, cpu_mode_stop};
+  extern int cpu_mode;
 };
+
+#endif
+#include <pthread.h>
+#include "../util/byte-type.h"

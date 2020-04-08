@@ -23,6 +23,8 @@ namespace gameboy
   bool debugger_on;
   pthread_mutex_t cpu_mutex;
 
+  int cpu_mode;
+
   // 0 if no interrupt
   byte_t interrupt_address;
 
@@ -70,20 +72,6 @@ namespace gameboy
     try
     {
       std::ifstream file(rom_dir, std::ios::binary);
-      // std::streamsize size = file.tellg();
-      // printf("Size of ROM is %zd\n", size);
-      // if (!file.good() || size == 0)
-      // {
-      //   printf("Error occurred when reading file \"%s\". Wrong directory?\n",
-      //     rom_dir);
-      //   return false;
-      // }
-      // std::vector<char> buf(size);
-      // if (file.read(buf.data(), size).bad())
-      // {
-      //   printf("Error occurred when reading rom.\n");
-      //   return false;
-      // }
       std::vector<byte_t> buf(std::istreambuf_iterator<char>(file), {});
       rom_buf = buf;
     }
@@ -120,7 +108,11 @@ namespace gameboy
     }
 
     pthread_mutex_lock(&cpu_mutex);
-    if (interrupt_address)
+    if (cpu_mode != cpu_mode_normal)
+    {
+      cpu_clock += 4;
+    }
+    else if (interrupt_address)
     {
       if (debugger_on)
       {
@@ -132,7 +124,7 @@ namespace gameboy
       cpu_clock += 16;
       interrupt_master = false;
       int interrupt_ind = (interrupt_address - 0x40) / 8;
-      memory.at(IF) |= (1 << interrupt_ind);
+      memory.at(IF) &= ~(1 << interrupt_ind);
       interrupt_address = 0;
     }
     else
@@ -185,8 +177,8 @@ namespace gameboy
         video_next_event += sprite_search_clocks;
         ly = (ly + 1) % (screen_row_num + v_blank_lines);
         memory.at(LY) = ly;
-        if (debugger_on || ly == 0)
-        printf("========== clk=%lld\n", cpu_clock);
+        // if (debugger_on || ly == 0)
+        // printf("========== clk=%lld\n", cpu_clock);
         if (stat & (1 << 3))
         {
           stat_interrupt();
@@ -231,7 +223,7 @@ namespace gameboy
         {
           // The first of 10 lines in vertical blank
           // Set vertical blank flag
-          mem_ref(IF) = ~1 & memory.at(IF);
+          mem_ref(IF) = 1 | memory.at(IF);
           if (stat & (1 << 4))
           {
             stat_interrupt();
@@ -246,18 +238,23 @@ namespace gameboy
 
   byte_t write_interrupt_flag(dbyte_t addr, byte_t val)
   {
-    byte_t events = ~val & memory.at(IE);
+    byte_t events = val & memory.at(IE);
     // printf("%x %x\n", falling_edge, memory.at(IE));
 
-    if (events && interrupt_master)
+    if (events)
     {
       for (byte_t i = 0; i < 5; i++)
       {
         if (events & (1 << i))
         {
-          interrupt_address = 0x40 + 8 * i;
-          if (debugger_on)
-          printf("Interrupt %d. IF=%.2hhx, IE=%.2hhx\n", i, val, memory.at(IE));
+          if (interrupt_master)
+          {
+            interrupt_address = 0x40 + 8 * i;
+            if (debugger_on)
+            printf("Interrupt %d. IF=%.2hhx, IE=%.2hhx\n", i, val, memory.at(IE));
+          }
+          // Exit halt mode
+          cpu_mode = cpu_mode_normal;
           break;
         }
       }
@@ -304,7 +301,7 @@ namespace gameboy
   void stat_interrupt()
   {
     byte_t old = memory.at(IF);
-    mem_ref(IF) = old & (1 << 1);
+    mem_ref(IF) = old | (1 << 1);
   }
 
   void start_lcd()

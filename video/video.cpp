@@ -209,6 +209,8 @@ namespace gameboy
 
   const tile_t &get_bg_tile(byte_t code);
 
+  void render_sprite(const sprite_t &, byte_t row_num, color_t *dst);
+
   void render_row(int row_num)
   {
     std::array<color_t, screen_column_num + 16> &buf = screen_buf.at(row_num);
@@ -237,14 +239,17 @@ namespace gameboy
     std::stable_sort(spr_bottom.begin(), spr_bottom.end(), cmp);
     std::stable_sort(spr_top.begin(), spr_top.end(), cmp);
 
+    // Later, color 0 of bgp is transparent
+    memset(buf.begin() + 8, bgp[0], screen_column_num);
+
     // Sprites in the bottom
     if (sprite_on)
     {
       for (auto i = spr_bottom.crbegin(); i != spr_bottom.crend(); i++)
       {
         const sprite_t &spr = sprite_set[*i];
-        copy_one_row(tile_set[spr.tile_num], row_num - (spr.y - 16),
-          obp[spr.palette], buf.begin() + 8 + (spr.x - 8));
+        color_t *dst = buf.begin() + 8 + (spr.x - 8);
+        render_sprite(spr, row_num, dst);
       }
     }
 
@@ -298,8 +303,42 @@ namespace gameboy
       for (auto i = spr_top.crbegin(); i != spr_top.crend(); i++)
       {
         const sprite_t &spr = sprite_set[*i];
-        copy_one_row(tile_set[spr.tile_num], row_num - (spr.y - 16),
-          obp[spr.palette], buf.begin() + 8 + (spr.x - 8));
+        color_t *dst = buf.begin() + 8 + (spr.x - 8);
+        render_sprite(spr, row_num, dst);
+      }
+    }
+  }
+
+  void render_sprite(const sprite_t &spr, byte_t row_num, color_t *dst)
+  {
+    // copy_one_row(tile_set[spr.tile_num], row_num - (spr.y - 16),
+    //   obp[spr.palette], buf.begin() + 8 + (spr.x - 8));
+    const tile_t &tile = tile_set[spr.tile_num];
+
+    byte_t tile_row = row_num - (spr.y - 16);
+    if (spr.y_flip)
+    {
+      tile_row = 7 - tile_row;
+    }
+    const std::array<color_t, 8> &row = tile[tile_row];
+
+    const palette_t &plt = obp[spr.palette];
+    if (!spr.x_flip)
+    {
+      for (int i = 0; i < 8; i++)
+      {
+        color_t c = row[i];
+        if (c)
+          dst[i] = plt[c];
+      }
+    }
+    else
+    {
+      for (int i = 0; i < 8; i++)
+      {
+        color_t c = row[7 - i];
+        if (c)
+          dst[i] = plt[c];
       }
     }
   }
@@ -326,7 +365,9 @@ namespace gameboy
     const std::array<color_t, 8> &row = tile[row_num];
     for (int i = 0; i < 8; i++)
     {
-      dst[i] = plt[row[i]];
+      color_t c = row[i];
+      if (c)
+        dst[i] = plt[c];
     }
   }
 };
