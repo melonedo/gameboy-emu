@@ -205,7 +205,7 @@ namespace gameboy
 
   // Copy 8 bytes
   void copy_one_row(const tile_t &tile, uint8_t row_num,
-    const palette_t &plt, color_t *dst);
+    const palette_t &plt, color_t *dst, int len = 8);
 
   const tile_t &get_bg_tile(byte_t code);
 
@@ -263,18 +263,34 @@ namespace gameboy
       dbyte_t map_base = bg_map_addr + 32 * (relative_row / 8);
       int map_index_begin = left / 8;
       auto copy_dst = buf.begin() + 8 - left % 8;
-      const int tile_num = screen_column_num / 8 + 1;
+      byte_t right;
+      if (win_on && memory.at(WY) <= row_num)
+      {
+        // Need to draw window
+        right = memory.at(WX) - 7;
+      }
+      else
+      {
+        right = screen_column_num;
+      }
+      // Copy starts at -left % 8, compensate for this
+      right += left % 8;
+      int tile_num = right / 8;
       if (debugger_on)
       printf("%hhd %hhd %hd %hx %d %d\n", left, up, relative_row, map_base, map_index_begin, copy_dst - buf.begin());
 
       for (int i = 0; i < tile_num; i++)
       {
-        if (debugger_on)
-        printf("Tile %.2hhx-%.2hhx row %hhd\n",map_base + (i + map_index_begin) % 32, memory.at(map_base + (i + map_index_begin) % 32), relative_row % 8);
+        // if (debugger_on)
+        // printf("Tile %.2hhx-%.2hhx row %hhd\n",map_base + (i + map_index_begin) % 32, memory.at(map_base + (i + map_index_begin) % 32), relative_row % 8);
         copy_one_row(
           get_bg_tile(memory.at(map_base + (i + map_index_begin) % 32)),
           relative_row % 8, bgp, copy_dst + 8 * i);
       }
+      // Draw the final tile
+      copy_one_row(
+        get_bg_tile(memory.at(map_base + (tile_num + map_index_begin) % 32)),
+        relative_row % 8, bgp, copy_dst + 8 * tile_num, right % 8);
     }
 
     // Window
@@ -286,7 +302,7 @@ namespace gameboy
       {
         dbyte_t relative_row = row_num - up;
         byte_t left = memory.at(WX) - 7;
-        dbyte_t map_base = win_map_addr + 32 * row_num;
+        dbyte_t map_base = win_map_addr + 32 * (relative_row / 8);
         int tile_num = (160 - left) / 8 + 1;
         auto copy_dst = buf.begin() + 8 + left;
         for (int i = 0; i < tile_num; i++)
@@ -347,23 +363,23 @@ namespace gameboy
   {
     if (unsigned_tile_num)
     {
-      if (debugger_on)
-      printf("%.2hhx ", code);
+      // if (debugger_on)
+      // printf("%.2hhx ", code);
       return tile_set[code];
     }
     else
     {
-      if (debugger_on)
-      printf("s%d ", 256 + code);
+      // if (debugger_on)
+      // printf("s%d ", 256 + code);
       return tile_set[add_signed(dbyte_t(256), code)];
     }
   }
 
   void copy_one_row(const tile_t &tile, uint8_t row_num,
-    const palette_t &plt, color_t *dst)
+    const palette_t &plt, color_t *dst, int len)
   {
     const std::array<color_t, 8> &row = tile[row_num];
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < len; i++)
     {
       color_t c = row[i];
       if (c)

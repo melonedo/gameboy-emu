@@ -142,6 +142,7 @@ void repl()
         {
           pthread_mutex_lock(&cpu_mutex);
           if (breakpoints.count(reg.pc()) != 0 || program_ended)
+          // if ((reg.pc() == 0x3270 && reg.a() == 0x82)|| program_ended)
           {
             pthread_mutex_unlock(&cpu_mutex);
             break;
@@ -150,7 +151,7 @@ void repl()
           if (cpu_clock >= oscillator)
           {
             pthread_mutex_lock(&oscillator_mutex);
-            oscillator = cpu_clock + 1;
+            oscillator = cpu_clock + 4;
             pthread_cond_signal(&oscillator_cond);
             pthread_mutex_unlock(&oscillator_mutex);
           }
