@@ -148,14 +148,14 @@ namespace gameboy
     byte_t ADD(byte_t v1, byte_t v2)
     {
       int res = v1 + v2;
-      set_flag(res == 0, false, (v1 & 0xf) + (v2 & 0xf) > 0x10, res > 0x100);
+      set_flag(res == 0, false, (v1 & 0xf) + (v2 & 0xf) >= 0x10, res >= 0x100);
       return res;
     }
 
     byte_t ADC(byte_t v1, byte_t v2)
     {
       int res = v1 + v2 + C();
-      set_flag(res == 0, false, (v1 & 0xf) + (v2 & 0xf) + C()> 0x10, res > 0x100);
+      set_flag(res == 0, false, (v1 & 0xf) + (v2 & 0xf) + C() >= 0x10, res >= 0x100);
       return res;
     }
 
@@ -169,14 +169,14 @@ namespace gameboy
     dbyte_t ADD(dbyte_t v1, dbyte_t v2)
     {
       int res = v1 + v2;
-      set_flag(Z(), false, (v1 & 0xfff) + (v2 & 0xfff) > 0x1000, res > 0x10000);
+      set_flag(Z(), false, (v1 & 0xfff) + (v2 & 0xfff) >= 0x1000, res >= 0x10000);
       return res;
     }
 
     dbyte_t ADDSP(dbyte_t v1, byte_t v2)
     {
-      set_flag(false, false, (v1 & 0xf) + (v2 & 0xf) > 0x10,
-        (v1 & 0xff) + v2 > 0x100);
+      set_flag(false, false, (v1 & 0xf) + (v2 & 0xf) >= 0x10,
+        (v1 & 0xff) + v2 >= 0x100);
       return add_signed(v1, v2);
     }
 
@@ -205,7 +205,7 @@ namespace gameboy
     void CP(byte_t v1, byte_t v2)
     {
       int res = v1 - v2;
-      set_flag(res == 0, true, (v1 & 0xf) < (v2 & 0xf), C());
+      set_flag(res == 0, true, (v1 & 0xf) < (v2 & 0xf), v1 < v2);
     }
 
     byte_t DEC(byte_t val)
@@ -250,13 +250,13 @@ namespace gameboy
     byte_t RRC(byte_t val)
     {
       val = (val >> 1) | (val << 7);
-      set_flag(val == 0, false, false, val & 0xf0);
+      set_flag(val == 0, false, false, val & 0x80);
       return val;
     }
 
     byte_t RL(byte_t val)
     {
-      bool new_c = val & 0xf0;
+      bool new_c = val & 0x80;
       val = (val << 1) | C();
       set_flag(val == 0, false, false, new_c);
       return val;
@@ -272,7 +272,7 @@ namespace gameboy
 
     byte_t SLA(byte_t val)
     {
-      bool new_c = val & 0xf0;
+      bool new_c = val & 0x80;
       val <<= 1;
       set_flag(val == 0, false, false, new_c);
       return val;

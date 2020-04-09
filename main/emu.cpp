@@ -103,8 +103,12 @@ namespace gameboy
   {
     if (debugger_on)
     {
-      show_status();
+      if (cpu_mode == cpu_mode_normal)
+      {
 
+        show_status();
+        printf("cpu_clock=%d\n", cpu_clock);
+      }
     }
 
     pthread_mutex_lock(&cpu_mutex);
@@ -155,8 +159,9 @@ namespace gameboy
   {
     printf("AF:%.4x BC:%.4x DE:%.4x HL:%.4x PC:%.4x SP:%.4x\n",
       reg.af(), reg.bc(), reg.de(), reg.hl(), reg.pc(), reg.sp(), cpu_clock);
-    printf("LCDC:%.2hhx STAT:%.2hhx LY:%.2hhx clock:%lld\n",
-      memory.at(LCDC), memory.at(STAT), memory.at(LY), cpu_clock);
+    printf("LCDC:%.2hhx STAT:%.2hhx LY:%.2hhx IE:%.2hhx IF:%.2hhx clock:%lld\n",
+      memory.at(LCDC), memory.at(STAT), memory.at(LY), memory.at(IE), memory.at(IF),
+      cpu_clock);
     printf("[%.4hx] %.2hhx %.2hhx %.2hhx %.2hhx %.2hhx\n", reg.pc(),
       memory.at(reg.pc()), memory.at(reg.pc()+1), memory.at(reg.pc()+2),
       memory.at(reg.pc()+3), memory.at(reg.pc()+4));
@@ -177,7 +182,7 @@ namespace gameboy
         video_next_event += sprite_search_clocks;
         ly = (ly + 1) % (screen_row_num + v_blank_lines);
         memory.at(LY) = ly;
-        // if (debugger_on || ly == 0)
+        if (debugger_on || ly == 0)
         // printf("========== clk=%lld\n", cpu_clock);
         if (stat & (1 << 3))
         {

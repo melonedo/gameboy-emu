@@ -4,6 +4,7 @@
 #include "../util/byte-type.h"
 #include "../video/video.h"
 #include "../main/threads.h"
+#include "../cpu/cpu.h"
 
 namespace gameboy
 {
@@ -21,6 +22,10 @@ namespace gameboy
 
   void MemoryReference::write(byte_t val)
   {
+    // if (addr == 0x9800)
+    // {
+    //   printf("----------------------------------%.4hx %.2hhx %lld\n", reg.pc(), val, oscillator);
+    // }
     if (addr < 0x8000)
     {
       // ROM
