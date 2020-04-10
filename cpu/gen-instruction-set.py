@@ -178,7 +178,7 @@ def format_instruction(instr):
 
 
 # Copy the draft
-with open("instruction-set-draft.cpp", 'rt') as src:
+with open("instruction-set-blueprint.cpp", 'rt') as src:
     draft = src.read()
 with open("instruction-set.cpp", 'wt') as dst:
     dst.write(draft)
