@@ -162,7 +162,7 @@ namespace gameboy
     byte_t INC(byte_t val)
     {
       int res = val + 1;
-      set_flag(res == 0, false, (val & 0xf) == 0xf, C());
+      set_flag(val == 0xff, false, (val & 0xf) == 0xf, C());
       return res;
     }
 
@@ -211,7 +211,7 @@ namespace gameboy
     byte_t DEC(byte_t val)
     {
       int res = val - 1;
-      set_flag(res == 0, true, (val & 0xf) == 0, C());
+      set_flag(val == 1, true, (val & 0xf) == 0, C());
       return res;
     }
 
