@@ -5,7 +5,7 @@
 #include <limits>
 #include <set>
 #include <SDL.h>
-#include <pthread.h>
+#include "../util/thread-util.h"
 #include "../util/byte-type.h"
 #include "../memory/memory.h"
 #include "../cpu/cpu.h"
@@ -19,7 +19,12 @@ const char *rom_dir = "testrom.gb";
 
 std::set<dbyte_t> breakpoints;
 
-
+namespace gameboy
+{
+  bool program_ended = false;
+  Promise emulator_init_promise;
+  Promise window_init_promise;
+};
 
 // Console interaction
 void repl();
@@ -29,45 +34,34 @@ void sync_oscillator(long long clocks);
 
 int main(int argc, char *argv[])
 {
-  pthread_mutex_init(&oscillator_mutex, NULL);
-  pthread_cond_init(&oscillator_cond, NULL);
-  pthread_mutex_init(&cpu_mutex, NULL);
-  pthread_mutex_init(&video_mutex, NULL);
+  Thread emulator_thread(emulator_main);
+  Thread window_thread(window_main);
 
   printf("Starting SDL.\n");
-  bool success = init_and_wait(&window_thread, window_main, NULL);
-  if (!success)
-  {
-    printf("Initilization failed!\n");
-    goto free_pthread;
-  }
-
-  printf("Starting emulator. Load rom file \"%s\"\n", rom_dir);
-  success = init_and_wait(&emulator_thread, emulator_main,
-    const_cast<char *>(rom_dir));
+  window_thread.start(NULL);
+  bool success = window_init_promise.get_value();
   if (!success)
   {
     printf("Initilization failed!\n");
   }
   else
   {
-    repl();
+    printf("Starting emulator. Load rom file \"%s\"\n", rom_dir);
+    emulator_thread.start(const_cast<char *>(rom_dir));
+    success = emulator_init_promise.get_value();
+    if (!success)
+    {
+      printf("Initilization failed!\n");
+    }
+    else
+    {
+      repl();
+    }
   }
 
   program_ended = true;
-  pthread_join(emulator_thread, NULL);
-  free_pthread:
-  pthread_join(window_thread, NULL);
-  pthread_mutex_lock(&oscillator_mutex);
-  pthread_mutex_unlock(&oscillator_mutex);
-  pthread_mutex_destroy(&oscillator_mutex);
-  pthread_mutex_lock(&cpu_mutex);
-  pthread_mutex_unlock(&cpu_mutex);
-  pthread_mutex_destroy(&cpu_mutex);
-  pthread_cond_destroy(&oscillator_cond);
-  pthread_mutex_lock(&video_mutex);
-  pthread_mutex_unlock(&video_mutex);
-  pthread_mutex_destroy(&video_mutex);
+  window_thread.join();
+  emulator_thread.join();
   return 0;
 }
 
@@ -140,25 +134,25 @@ void repl()
         printf("Run until breakpoint.\n");
         while (true)
         {
-          pthread_mutex_lock(&cpu_mutex);
+          cpu_mutex.lock();
           if (breakpoints.count(reg.pc()) != 0 || program_ended)
           // if ((reg.pc() == 0x3270 && reg.a() == 0x82)|| program_ended)
           {
-            pthread_mutex_unlock(&cpu_mutex);
+            cpu_mutex.unlock();
             break;
           }
-          pthread_mutex_unlock(&cpu_mutex);
+          cpu_mutex.unlock();
           if (cpu_clock >= oscillator)
           {
-            pthread_mutex_lock(&oscillator_mutex);
+            oscillator_cond.mutex.lock();
             oscillator = cpu_clock + 4;
-            pthread_cond_signal(&oscillator_cond);
-            pthread_mutex_unlock(&oscillator_mutex);
+            oscillator_cond.signal();
+            oscillator_cond.mutex.unlock();
           }
           else
-            pthread_cond_signal(&oscillator_cond);
+            oscillator_cond.signal();
         }
-        pthread_cond_signal(&oscillator_cond);
+        oscillator_cond.signal();
         show_status();
         puts(get_disas().c_str());
         // Go to next instruction
@@ -242,17 +236,12 @@ void repl()
       }
     }
     sync_oscillator(oscillator + step_len);
-    // pthread_mutex_lock(&oscillator_mutex);
-    // oscillator += step_len;
-    // pthread_cond_signal(&oscillator_cond);
-    // pthread_mutex_unlock(&oscillator_mutex);
-    // printf("Osc: %lld\n", oscillator);
   }
   // Emulator is probably still locked now
-  pthread_mutex_lock(&oscillator_mutex);
+  oscillator_cond.mutex.lock();
   oscillator = std::numeric_limits<long long>::max();
-  pthread_cond_signal(&oscillator_cond);
-  pthread_mutex_unlock(&oscillator_mutex);
+  oscillator_cond.signal();
+  oscillator_cond.mutex.unlock();
 }
 
 void show_boot_rom()
@@ -280,13 +269,12 @@ void sync_oscillator(long long clocks)
         break;
       SDL_Delay(1);
     }
-    pthread_mutex_lock(&oscillator_mutex);
+    Lock l(oscillator_cond.mutex);
     oscillator += clock_step;
     if (oscillator > clocks)
     {
       oscillator = clocks;
     }
-    pthread_cond_signal(&oscillator_cond);
-    pthread_mutex_unlock(&oscillator_mutex);
+    oscillator_cond.signal();
   }
 }

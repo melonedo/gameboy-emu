@@ -22,7 +22,7 @@ namespace gameboy
 
   void MemoryReference::write(byte_t val)
   {
-    // if (addr == 0x9800)
+    // if (addr == 0xff00)
     // {
     //   printf("----------------------------------%.4hx %.2hhx %lld\n", reg.pc(), val, oscillator);
     // }

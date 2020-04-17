@@ -3,11 +3,11 @@ SRCS = \
 	cpu/instruction-set.cpp \
 	util/byte-type.cpp \
 	util/bit-register.cpp \
+	util/thread-util.cpp \
 	memory/memory.cpp \
 	video/video.cpp \
 	main/emu.cpp \
 	main/window.cpp \
-	main/threads.cpp \
 	main/main.cpp
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
@@ -39,5 +39,5 @@ cpu/instruction-set.cpp: cpu/gen-instruction-set.py cpu/instruction-data.json
 
 clean:
 	rm -f $(OBJS)
-	rm -f $(PROG)``
+	rm -f $(PROG)
 	rm -f cpu/instruction-set.cpp

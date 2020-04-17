@@ -4,24 +4,22 @@
 #include <fstream>
 #include <cstring>
 #include <algorithm>
-#include <pthread.h>
 #include "threads.h"
 #include "../util/byte-type.h"
 #include "../memory/memory.h"
 #include "../cpu/cpu.h"
 #include "../video/video.h"
+#include "../util/thread-util.h"
 
 namespace gameboy
 {
-  pthread_t emulator_thread;
   std::vector<byte_t> rom_buf;
   long long oscillator;
-  pthread_mutex_t oscillator_mutex;
-  pthread_cond_t oscillator_cond;
+  Condition oscillator_cond;
   long long cpu_clock;
   long long video_next_event;
   bool debugger_on;
-  pthread_mutex_t cpu_mutex;
+  Mutex cpu_mutex;
 
   int cpu_mode;
 
@@ -50,9 +48,8 @@ namespace gameboy
 
   void *emulator_main(void *dir)
   {
-    begin_init();
     bool success = init_emulator(static_cast<const char *>(dir));
-    end_init(success);
+    emulator_init_promise.set_value(success);
     if (!success)
       return NULL;
 
@@ -111,7 +108,7 @@ namespace gameboy
       }
     }
 
-    pthread_mutex_lock(&cpu_mutex);
+    cpu_mutex.lock();
     if (cpu_mode != cpu_mode_normal)
     {
       cpu_clock += 4;
@@ -140,19 +137,13 @@ namespace gameboy
       fetch_instruction(&opcode, &op8, &op16);
       cpu_clock += exec_instruction(opcode, op8, op16);
     }
-    pthread_mutex_unlock(&cpu_mutex);
+    cpu_mutex.unlock();
 
     video_timing();
 
     // Wait for clock
-    if (cpu_clock >= oscillator && !program_ended)
-    {
-      pthread_mutex_lock(&oscillator_mutex);
-      do {
-        pthread_cond_wait(&oscillator_cond, &oscillator_mutex);
-      } while (cpu_clock >= oscillator && !program_ended);
-      pthread_mutex_unlock(&oscillator_mutex);
-    }
+    oscillator_cond.wait_for(
+      [&]() { return program_ended || cpu_clock < oscillator; });
   }
 
   void show_status()
@@ -223,7 +214,7 @@ namespace gameboy
       }
       else
       {
-        stat |= 2;
+        stat |= 1;
         if (ly == screen_row_num && video_mode == sprite_search)
         {
           // The first of 10 lines in vertical blank

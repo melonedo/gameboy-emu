@@ -7,12 +7,9 @@
 
 namespace gameboy
 {
-  pthread_t window_thread;
 
   SDL_Window *pWindow;
   SDL_Renderer *pRenderer;
-
-  pthread_mutex_t video_mutex;
 
   // Signle byte representing 8 keys
   // 1 for released, 0 for pressed
@@ -33,9 +30,8 @@ namespace gameboy
 
   void *window_main(void *param)
   {
-    begin_init();
     bool success = init_window();
-    end_init(success);
+    window_init_promise.set_value(success);
     if (!success)
       return NULL;
 
@@ -195,6 +191,7 @@ namespace gameboy
     {
       joypad |= mask;
     }
+    // printf("%x\n", joypad);
   }
 
   byte_t write_joypad(byte_t val)
